@@ -1,20 +1,13 @@
 # Goal Keeper
 
 GoalKeeper is a proxy. Just like any proxy it forwards requests and responses between client and server.
-
 However GoalKeeper allows you to setup 'rules', with these rules there are two things.
-
-Note: This is mainly meant for testing/development environments. Running javascript code on the fly when inspecting requests and responses is not considered 'internet safe'. It is not recommended to use this Proxy in production for live environments.
 
 * Regular Expression used to inspect the body (sorry doesn't work on GET requests)
 
 * Once a RegEx has a hit you can use JavaScript to manipulate the request and responses
 
-Add the JavaScript code to be executed when the regular expression matches. 
-
-Note: There are two objects provided to the function: request and response. 
-
-The following properties can be present
+The following properties can be present:
 
 Request
 
@@ -24,8 +17,7 @@ Request
 
 - body -> The body of the request
 
-
-response
+Response
 
 - statusCode -> This will be the server response status code (e.g. 200 or 404)
 
@@ -35,8 +27,19 @@ In case of a request, if you fill in the response details GoalKeeper will not pr
 
 You will need to set response.statusCode and optionally a body. If you leave response undefined on the request, GoalKeeper will proxy the request to the server. 
 
-
 Please call done(); at the end of your program to finish your changes and handle/proxy the request/response. 
+
+For example:
+```javascript
+var response = {
+	statusCode : 503,
+	body : 'Hello World!'
+};
+
+done();
+```
+
+Will immediately return a 503 on the response with the Body: Hello World!
 
 ## Prerequisites
 
@@ -44,11 +47,11 @@ GoalKeeper uses REDIS for key/value storage, it requires a redis server to conne
 
 ## Installation
 
-1. npm install to install the required npm packages
+1. `npm install` to install the required npm packages
 2. make sure Redis is running
-3. Configure your settings in config.js
-4. node goalKeeper
-5. Open browser to http://<ip of goalkeeper>:8081 for the administration webpage
+3. Configure your settings in `config.js`
+4. `node goalKeeper`
+5. Open browser to `http://<ip of goalkeeper>:8081` for the administration webpage
 
 ## Todo
 
