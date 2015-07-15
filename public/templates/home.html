@@ -1,0 +1,36 @@
+<div class="row-fluid">
+    <% if (err) { %>
+        <div class="alert">
+          <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <% if (err.Error) { %>
+            <strong>Warning!</strong> <%= err.Error.Message %> .
+        <% } else { %>
+            <strong>Warning!</strong> An error occurred while talking to the Goal Keeper Back End.
+        <% } %>
+        </div>
+    <% } %>
+</div>
+
+<div class="row-fluid">
+    <label class="span2 inline">Currently active clients::</label>
+    <div class="span2 inline">
+        <p id="activeClients"></p>
+    </div>
+    <p class="offset3 inline btn btn-info showActive">Show</p>
+</div>
+
+<div class="row-fluid">
+    <label class="span2 inline">Registered clients</label>
+    <div class="span2 inline">
+        <p id="registeredClients"></p>
+    </div>
+    <p class="offset3 inline btn btn-info showRegistered">Show</p>
+</div>
+<br>
+<div class="row-fluid">
+    <label class="span2 inline">Selected Client:</label>
+    <div class="span2 inline">
+        <input type="text" id="clientId" value="<%= vars.clientId ? vars.clientId : '' %>" />
+    </div>
+    <p class="btn btn save">Save</p>
+</div>

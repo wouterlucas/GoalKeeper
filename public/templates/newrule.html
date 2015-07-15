@@ -1,0 +1,85 @@
+<div class="row-fluid">
+    <p class="span2"><b>Client ID</b></p> <p class="span3"><%= clientId %></p>
+    <div class="offset2 btn btn-danger startOver hidden">Start over</div>
+</div>
+
+<div class="row-fluid ruleTypeDiv">
+
+    <div class="row-fluid">
+        <p class="span4"><b>Type: </b> New Rule, please select rule type (request or response)</p>
+    </div>
+    <div class="row-fluid">
+        <div class="span4">
+            <select id="ruleType">
+                <option>Request</option>
+                <option>Response</option>
+            </select>
+        </div>
+        <div class="offset2 span1 btn setType">OK</div>
+    </div>
+</div>
+
+<div class="row-fluid regExpDiv" style="display:none;">
+    <div class="row-fluid">
+        <p class="span4"><b>Reg Exp:</b> Add the Regular Expression used on the body of the request or response. If a match has been made the code will be executed</p>
+    </div>
+    <div class="row-fluid">
+        <div class="span6">
+            <input type="text" id="regExp" value="" style="width: 500px;" />
+        </div>
+        <div class="span1 btn setRegExp">OK</div>
+    </div>
+</div>
+
+<div class="row-fluid setNameDiv" style="display:none;">
+    <div class="row-fluid">
+        <p class="span4"><b>Name:</b> Please name your program (unique), for administration purposes</p>
+    </div>
+    <div class="row-fluid">
+        <div class="span6">
+            <input type="text" id="name" value="" style="width: 500px;" />
+        </div>
+        <div class="span1 btn setName">OK</div>
+    </div>
+</div>
+
+
+<div class="row-fluid codeDiv" style="display:none;">
+    <div class="span12"><b>Code:</b> Add the JavaScript code to be executed when the regular expression matches. 
+
+        <br><br><b>Note:</b> There are two objects provided to the function: <i>request</i> and <i>response</i>.
+        <br>The following properties can be present<br>
+        <br><i>request</i><br>
+        - method -> The method of the request (e.g. GET, POST, PUT, etc)<br>
+        - url -> The URL of the request (e.g. /a/b)<br>
+        - body -> The body of the request<br>
+        <br>
+        <br><i>response</i><br>
+        - statusCode -> This will be the server response status code (e.g. 200 or 404)<br>
+        - body -> The body of the response<br>
+        <br>In case of a request, if you fill in the response details GoalKeeper will not proxy the request but immediately respond to the client.
+        <br>You will need to set response.statusCode and optionally a body. If you leave response undefined on the request, GoalKeeper will proxy the request to the server.
+        <br>
+        <br>Please call done(); at the end of your program to finish your changes and handle/proxy the request/response.
+        <br>
+</div>
+<div class="row-fluid">
+    <textarea class="span12" id="code" name="thetext" rows="20" cols="80">
+//your code goes here
+done(); //indicate that you are done with the changes
+    </textarea>
+</div>
+
+<div class="row-fluid">
+    <div class="span1 btn validateAndSaveRule">Save</div>
+</div>
+
+
+<div class="pleaseWaitDiv" style="display:none;">
+    <div clas="row-fluid">
+        <p class="span4">Please wait while magic happens. Saving...</p>
+    </div>
+    <div clas="row-fluid">
+        <img class="offset3 span1" src="img/spiffygif_30x30.gif" />
+    </div>
+</div>

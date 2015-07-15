@@ -1,0 +1,22 @@
+<div class="row-fluid">
+
+    <% if (clients.length == 0) { %>
+            <p>No clients found</p>
+        <% } else { %>
+             <table class="table">
+                <tr>
+                    <th>IP</th><th>Controls</th>
+                </tr>
+                <% _.each(clients, function(client){ %>
+                        <td>
+                            <%= client ? client : '' %>
+                        </td>
+
+                        <td>
+                            <p class="inline btn btn-info select" data-clientid="<%= client %>">Select</p>
+                        </td>                            
+                    <tr>
+                <% }); %>
+            </table>           
+        <% } %>
+</div>

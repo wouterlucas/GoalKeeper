@@ -1,0 +1,18 @@
+# humanstxt.org/
+# The humans responsible & technology colophon
+
+# TEAM
+
+    Aart van Asseldonk -- owner
+    Bas van Poppel -- designer
+    Wouter van Boesschoten -- coder -- http://twitter.com/wouterlucas
+
+# THANKS
+
+
+
+# TECHNOLOGY COLOPHON
+
+    HTML5, CSS3
+    Bootstrap, jQuery, Modernizr, Backbone
+    NodeJS, MongoDB, Mongoose

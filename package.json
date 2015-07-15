@@ -1,0 +1,30 @@
+{
+  "name": "GoalKeeper",
+  "version": "0.1.0",
+  "description": "HTTP Proxy with the ability to intercept requests and manipulate them using javascript",
+  "main": "index.js",
+  "scripts": {
+    "start": "node goalKeeper.js"
+  },
+  "dependencies": {
+    "hiredis": "~0.4.x",
+    "redis": "~0.12.x",
+    "contextify" : "~0.1.x",
+    "express" : "~4.13.x",
+    "body-parser" : "~1.13.x"
+  },
+  "engines": {
+    "node": "0.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wouterlucas/GoalKeeper"
+  },
+  "keywords": [
+    "node",
+    "proxy",
+    "redis",
+    "contextify"
+  ],
+  "license": "MIT"
+}
