@@ -1,7 +1,11 @@
 # Goal Keeper
 
 GoalKeeper is a proxy. Just like any proxy it forwards requests and responses between client and server.
-However GoalKeeper allows you to setup 'rules', with these rules there are two things.
+However GoalKeeper allows you to setup 'rules' which will be inspected and execute once a request or response matches.
+
+GoalKeeper comes with a Back End API and Backbone.js/jQuery/Bootstrap based administration webpage to easily setup rules and view logs.
+
+For each rule:
 
 * Regular Expression used to inspect the body (sorry doesn't work on GET requests)
 
