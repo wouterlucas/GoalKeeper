@@ -5,9 +5,32 @@ However GoalKeeper allows you to setup 'rules' which will be inspected and execu
 
 GoalKeeper comes with a Back End API and Backbone.js/jQuery/Bootstrap based administration webpage to easily setup rules and view logs.
 
+# Overview
+                                   Goal Keeper
+                          +----------------------------+                     
+                          |                            |                     
+           Request --> o--|-------RegEx? -No-->Proxy-->|----> Request
+                          |          |                 |
+                          |         Yes                |
+                          |          |                 |
+    Direct Response <-----|<-Direct-*JSCode->Modified->|----> Request (modified)
+                          |  Resp.          Request    |
+                          |                            |                         
+                          |                            |
+           Response <-----|<--Fwd resp<----No-RegEx?---|<---- Response  
+                          |                      |     |
+    Modified Response <---|<-Mod Resp<--JSCode<-Yes    |
+                          |                            |
+                          +----------------------------+
+
+
+## Rules
+
+Each request and response can be inspected with 'rules' that can be configured using the GK admin page.
+
 For each rule:
 
-* Regular Expression used to inspect the body (sorry doesn't work on GET requests)
+* Regular Expression used to inspect the body (sorry doesn't work on GET requests, yet)
 
 * Once a RegEx has a hit you can use JavaScript to manipulate the request and responses
 
@@ -36,8 +59,8 @@ Please call done(); at the end of your program to finish your changes and handle
 For example:
 ```javascript
 var response = {
-	statusCode : 503,
-	body : 'Hello World!'
+    statusCode : 503,
+    body : 'Hello World!'
 };
 
 done();

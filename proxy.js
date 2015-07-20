@@ -61,6 +61,25 @@ http.createServer(function(clientRequest, clientResponse) {
 
     function _respondToClient(serverResponse){
         console.log('--> Response to client: ' + serverResponse.statusCode);
+
+        // add to cross check if someone forgets to stringify the response body object (like myself)
+        if (typeof(serverResponse.body) === 'object'){
+            serverResponse.body = JSON.stringify(serverResponse.body);
+        }
+
+        // we have no headers, lets set a few
+        if (serverResponse.headers === undefined){
+            serverResponse.headers = {
+                'content-length' : 0,
+                'Server': 'GoalKeeper  NodeJS v' + process.versions.node + ' Chrome V8 v' + process.versions.v8, 
+                'Connection': 'close'           
+            };
+        }
+
+        if (serverResponse.body.length > 0){
+            serverResponse.headers['content-length'] = serverResponse.body.length;
+        }
+
         clientResponse.writeHead(serverResponse.statusCode, serverResponse.headers);
 
         if (serverResponse.body.length > 0){
@@ -77,6 +96,11 @@ http.createServer(function(clientRequest, clientResponse) {
     clientRequest.on('end', function() {
         if (clientRequest.body.length > 0) console.log('<-- Request body: ' + clientRequest.body);
         
+        // make sure we clear the Accept header, to avoid getting GZIPped responses. I don't want to deal with gzip at this stage.
+        if (clientRequest.headers['accept'] !== undefined) {
+            delete clientRequest.headers['accept'];
+        }
+
         // log it
         redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'ORGREQ', { method : clientRequest.method, url : clientRequest.url, body: clientRequest.body }) );
 
@@ -89,23 +113,28 @@ http.createServer(function(clientRequest, clientResponse) {
                 _respondToClient(resp);
             }
 
-            if (keyExists === 1) { 
-                checkAndRun(clientRequest, undefined, function(clientRequest, customResponse){
+            if (keyExists === 1) {
+                checkAndRun(clientAddr, clientRequest, undefined, 'request', function(modifiedRequest, customResponse){
                     if (customResponse !== undefined){
                         // we have a response, lets response without making a proxy request
-                        //redis.lpush('LOG|' + clientAddr, 'DIRRES|' + customResponse.statusCode + '|' + customResponse.url + '|' + customResponse.body);
                         redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'DIRRES', { statusCode : customResponse.statusCode, body: customResponse.body }) );
+
                         _respondToClient(customResponse);
+
                     } else {
                         // lets forward after modifing the clientRequest
-                        //redis.lpush('LOG|' + clientAddr, 'MODREQ|' + clientRequest.method + '|' + clientRequest.url + '|' + clientRequest.body);
-                        redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'MODREQ', { method : clientRequest.method, url : clientRequest.url, body: clientRequest.body }) );
-                        proxyRequest(clientRequest, function(serverResponse){
-                            //redis.lpush('LOG|' + clientAddr, 'ORGRES|' + serverResponse.statusCode + '|' + serverResponse.url + '|' + serverResponse.body);
+                        redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'MODREQ', { method : modifiedRequest.method, url : modifiedRequest.url, body: modifiedRequest.body }) );
+
+                        proxyRequest(modifiedRequest, function(serverResponse){
+                            // we got a response, lets see if we need to modify that
                             redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'ORGRES', { statusCode : serverResponse.statusCode, body: serverResponse.body }) );
-                            checkAndRun(clientRequest, serverResponse, function(clientRequest, modifiedResponse){
-                                //redis.lpush('LOG|' + clientAddr, 'MODRES|' + modifiedResponse.statusCode + '|' + modifiedResponse.url + '|' + modifiedResponse.body);
-                                redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'MODRES', { statusCode : modifiedResponse.statusCode, body: modifiedResponse.body }) );
+                            
+                            checkAndRun(clientAddr, modifiedRequest, serverResponse, 'response', function(modifiedRequest, modifiedResponse){
+                                // check if the response is actually modified, if so log it
+                                if (serverResponse != modifiedResponse){
+                                    redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'MODRES', { statusCode : modifiedResponse.statusCode, body: modifiedResponse.body }) );
+                                }
+
                                 _respondToClient(modifiedResponse);
                             });
                         });                    
@@ -118,6 +147,7 @@ http.createServer(function(clientRequest, clientResponse) {
                 proxyRequest(clientRequest, function(serverResponse){
                     // log it
                     redis.lpush('LOG|' + clientAddr, createLog(clientAddr, 'ORGRES', { statusCode : serverResponse.statusCode, body: serverResponse.body }) );
+
                     _respondToClient(serverResponse);
                 });
 
@@ -131,27 +161,28 @@ http.createServer(function(clientRequest, clientResponse) {
 /* CheckAndRun - validate against regular expressions stored in REDIS
  * 
  * - If a regular expression tests positive on the body of the request or response, executeCode will be called
- * - If response is undefined, the request will be validated
- * - If response is present, the response will be validated
+ * - The inspectToggle can have 'request' or 'response' values to indicate what to inspect
  *
  * This function fetches data from REDIS: Key (IP of requestor) and the regular expression list + the code to be executed on postive hit
  */
-function checkAndRun(request, response, callback){
-    var clientIp = request.connection.remoteAddress;
+function checkAndRun(clientIp, request, response, inspectToggle, callback){
+    if (clientIp === undefined){
+        console.error('!!! Client IP is undefined, dont know what to do from here. Game over');
+        callback(request, response);
+    }
+
     var redisKey = 'requestRegExpList';
 
     // check if we are validating the request or the response by presence of the response object
-    if (response !== undefined){
+    if (inspectToggle === 'response'){
         redisKey = 'responseRegExpList';
     }
 
     function validateRegExpList(regularExpressionList){
-        if (regularExpressionList === undefined || regularExpressionList.length === 0){
+        if (regularExpressionList === undefined  || regularExpressionList.length === 0){
             console.log('--- Regular expression list empty or not present, returning');
             callback(request, response);
         }
-
-        console.log('--- Regular expression list size: ' + regularExpressionList.length);
 
         // see if one of the regular expressions has a positive hit
         for (var i=0; i<regularExpressionList.length; i++){
@@ -160,7 +191,7 @@ function checkAndRun(request, response, callback){
 
 
             //validate the request if the response hasn't been received yet
-            if (response === undefined){ 
+            if (inspectToggle === 'request'){
                 testResult = regExp.test(request.body);
             } else {
                 testResult = regExp.test(response.body);
@@ -206,8 +237,8 @@ function checkAndRun(request, response, callback){
  * executeCode - Executes 'custom' javascript code in a VM and fetches the modified output
  */
 function executeCode(request, response, code, callback){
-    var checkIntervalTimerInMs = 1000; //checking every second if you are done, assuming that's enough
-    var timeOutTimerInMs = 120 * 1000; //120 seconds and you're out
+    var checkIntervalTimerInMs = 1000; // checking every second if you are done, assuming that's enough
+    var timeOutTimerInMs = 60 * 1000; // seconds and you're out
 
     //create sandbox
     var sandbox = Contextify({
@@ -215,8 +246,16 @@ function executeCode(request, response, code, callback){
         request : request,
         response : response,
         ended : false,
+        t : undefined,
         done : function(){ cleanUp(); }
     });
+
+    sandbox.t = setTimeout(function(){
+        sandbox.dispose();
+        console.error('!!! Program timed out in sandbox, returning orignal values');
+        callback(request, response);
+
+    }, timeOutTimerInMs);    
 
     //run it
     sandbox.run(code);
@@ -226,6 +265,7 @@ function executeCode(request, response, code, callback){
         var req = sandbox.request;
 
         sandbox.dispose();
+        clearTimeout(sandbox.t);
         callback(req, res);
     }
 
@@ -236,13 +276,6 @@ function executeCode(request, response, code, callback){
             cleanUp();
         }
     }
-
-    setTimeout(function(){
-        sandbox.dispose();
-        console.error('!!! Program timed out in sandbox, returning orignal values');
-        callback(request, response);
-
-    }, timeOutTimerInMs);
 
     // are we there yet?
     checkIfDone();
